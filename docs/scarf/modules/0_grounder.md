@@ -1,46 +1,23 @@
 # Module 0: Document Grounder
 
-**Status**: v1 (Full Implementation)
-**Role**: The Foundation.
+**Responsibility**: The "Perception" Layer.
+Converts a raw PDF binary file into a grounded, addressable `Document` object.
 
-## 🎯 Responsibility
-Convert a raw PDF into a **grounded, addressable document representation**.
-This module is the single source of truth for all downstream reasoning. If it's not in Module 0's output, it doesn't exist.
+## ⚙️ Implementation Details
+*   **Source File**: `backend/reasoning_pipeline/modules/module_0_grounder.py`
+*   **Inputs**: PDF Path.
+*   **Outputs**: `Document` schema (List of `Section` objects).
 
-## ⚙️ Inputs & Outputs
+### 🛠 Visual Processing Strategy
+1.  **Rendering**: Uses `PyMuPDF` (fitz) or `pdf2image` to convert PDF pages to High-Res Images (300 DPI).
+2.  **PaddleOCR**: Runs `PaddleOCR` (English model) on each image.
+    *   **Detection**: Finds text bounding boxes.
+    *   **Classification**: Recognizes text content.
+3.  **Fallback**: If PaddleOCR runtime is missing (common in light environments), it falls back to `PyMuPDF` text extraction.
 
-*   **Input**: Raw PDF File.
-*   **Output**: `Document` JSON object.
-    ```json
-    {
-      "pages": [
-        {
-          "page_num": 1,
-          "image_path": "visuals/page_1.jpg",
-          "sections": ["S1", "S2"]
-        }
-      ],
-      "sections": [
-        {
-          "section_id": "S1",
-          "title": "1. Introduction",
-          "content": "Deep learning models...",
-          "bbox": [x1, y1, x2, y2],
-          "page_num": 1
-        }
-      ]
-    }
-    ```
+### ⚠️ Known Limitations (v1)
+*   **Section Merging**: Currently chunks text by Page (P1, P2...). It does not yet intelligently merge "Section 2.1" if it spans two pages. This is handled downstream by Module 1 (Segmenter).
+*   **Tables**: Extracted as raw text blocks, losing some tabular structure.
 
-## 🧠 Logic (No AI Reasoning)
-This module uses **OCR** and **Layout Parsing**, not LLMs.
-1.  **PDF -> Images**: Using `pdf2image`.
-2.  **Layout Parsing**: Using `PaddleOCR-VL` (PP-Structure).
-    *   Detect Header/Footer (filter out).
-    *   Detect Text Blocks.
-    *   Detect Tables/Figures.
-3.  **Sectioning**: Heuristic grouping of blocks based on font size and numbering (e.g., "1. Introduction" vs body text).
-
-## 🔒 Constraints
-*   **Full Coverage**: Every character in the PDF must be mapped.
-*   **Immutability**: Once generated, the `Document` object is read-only.
+## 🧪 Testing
+Run `python tests/test_pipeline_local.py` (Step 1).

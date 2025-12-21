@@ -1,36 +1,21 @@
 # Module 1: Rhetorical Segmenter
 
-**Status**: v1 (Basic Implementation)
-**Role**: The Map Maker.
+**Responsibility**: The "Structural" Layer.
+Assigns a functional role to each section of the document.
 
-## 🎯 Responsibility
-Assign **functional roles** to the sections identified by Module 0.
-We need to know *where* to look. Claims are usually in the Intro/Conclusion; Evidence is in Results.
+## ⚙️ Implementation Details
+*   **Source File**: `backend/reasoning_pipeline/modules/module_1_segmenter.py`
+*   **Inputs**: `Document` object.
+*   **Outputs**: `RhetoricalMap` (List of roles: `background`, `method`, `results`, `discussion`, `limitations`).
 
-## ⚙️ Inputs & Outputs
+### 🧠 Logic
+1.  **Iteration**: Loops through every `Section` in the document.
+2.  **Prompting**: Sends the section text (or first 1000 chars) to ERNIE 4.5.
+3.  **Prompt**: `backend/prompts/module_1_segmenter.txt`
+4.  **Repair**: Uses `utils.repair_json` to fix common LLM formatting errors before parsing.
 
-*   **Input**: `Document` (Sections).
-*   **Output**: `RhetoricalMap`.
-    ```json
-    [
-      {"section_id": "S1", "role": "BACKGROUND", "confidence": 0.95},
-      {"section_id": "S4", "role": "METHOD", "confidence": 0.88},
-      {"section_id": "S6", "role": "RESULTS", "confidence": 0.92}
-    ]
-    ```
+### 🎯 Use Case
+This module allows downstream modules to be efficient. For example, the `Evidence Linker` only needs to look at `results` sections, ignoring `intro`.
 
-## 🔬 Taxonomy (v1)
-We limit roles to broad categories:
-1.  `BACKGROUND`: Prior work, problem definition.
-2.  `METHOD`: Proposed approach, architecture, algorithm.
-3.  `RESULTS`: Experiments, datasets, tables, quantitative analysis.
-4.  `DISCUSSION`: Interpretation, limitations, future work.
-
-## 🧠 Logic (ERNIE Prompt)
-**Task**: Classification.
-**Prompt Strategy**:
-"You are given a section of a scientific paper. Classify its rhetorical role as one of: [Background, Method, Results, Discussion]. Return JSON."
-
-## 🔒 Constraints
-*   **One Role per Section**: Simplify the model.
-*   **Low Ambiguity**: If uncertain, default to `BODY`.
+## 🧪 Testing
+Run `python tests/test_pipeline_local.py` (Step 2).
