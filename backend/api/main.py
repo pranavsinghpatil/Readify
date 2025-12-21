@@ -4,6 +4,10 @@ from fastapi.responses import JSONResponse
 import shutil
 import os
 import uuid
+from dotenv import load_dotenv
+
+# Load Environment Variables
+load_dotenv()
 # from ..reasoning_pipeline.pipeline import SCARFPipeline
 # from ..ernie_pipeline.client import ErnieClient
 

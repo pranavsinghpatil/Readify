@@ -1,42 +1,39 @@
-# Module 3: Evidence Linker
+# Advanced Modules (3–6): Reasoning & Critique
 
-**Status**: v1 (Full Implementation)
-**Role**: The Forensic Analyst.
+These modules form the "Cognitive Core" of SCARF.
 
-## 🎯 Responsibility
-Link each extracted extracted Claim (from M2) to explicit supporting **Evidence** in the text.
-This answers: "Where is the proof?"
+## 🔗 Module 3: Evidence Linker
+*   **Goal**: Verify if a Claim has proof.
+*   **File**: `module_3_evidence.py`
+*   **Logic**:
+    *   For each Claim, scan `Results` sections.
+    *   Ask: "Does this text support this claim?"
+    *   Output: `EvidenceGraph` (Claim -> [Evidence 1, Evidence 2]).
+*   **Prompt**: `module_3_evidence.txt`
 
-## ⚙️ Inputs & Outputs
+## 🧱 Module 4: Assumption Miner
+*   **Goal**: Find hidden dependencies.
+*   **File**: `module_4_assumptions.py`
+*   **Logic**:
+    *   Read `Method` and `Introduction`.
+    *   Infer: "What must be true for this to work?" (e.g., "Assumes data is i.i.d.").
+    *   Output: `AssumptionLedger`.
+*   **Prompt**: `module_4_assumptions.txt`
 
-*   **Input**: `ClaimList` (from M2) + Sections labeled `RESULTS` (from M1).
-*   **Output**: `EvidenceGraph`.
-    ```json
-    [
-      {
-        "claim_id": "C1",
-        "evidence_links": [
-          {
-            "section_id": "S6",
-            "type": "QUANTITATIVE",
-            "snippet": "Table 2 shows a 5% improvement.",
-            "notes": "Compared on ImageNet only."
-          }
-        ]
-      }
-    ]
-    ```
+## ⚠️ Module 5: Gap Analyzer
+*   **Goal**: Synthesis.
+*   **File**: `module_5_gaps.py`
+*   **Logic**:
+    *   Input: Claims + Evidence + Assumptions.
+    *   Task: Identify weak links (Claim with no Evidence, or strong Assumption).
+    *   Output: `GapAnalysis` (List of `GapSignal`).
+*   **Prompt**: `module_5_gaps.txt`
 
-## 🔬 Evidence Taxonomy
-1.  **Quantitative**: Tables, charts, metrics (e.g., "Accuracy = 95%").
-2.  **Qualitative**: Visual inspection, case studies (e.g., "Figure 4 shows sharper edges").
-3.  **Theoretical**: Mathematical proof, derivation.
-4.  **None**: No evidence found (Flag this!).
-
-## 🧠 Logic (ERNIE Prompt)
-**Prompt Strategy**:
-"Given Claim C1 and Section S6, does this section provide specific evidence supporting the claim? If yes, describe the type."
-
-## 🔒 Constraints
-*   **No Interpretation**: Do not judge if the evidence is *good*. Just check if it *exists* and is *relevant*.
-*   **Strict Linking**: Evidence must be cited or present in the text.
+## ❓ Module 6: Validation Synthesizer
+*   **Goal**: Actionable Feedback.
+*   **File**: `module_6_validation.py`
+*   **Logic**:
+    *   Convert `GapSignal` into a research question.
+    *   Example: Gap="No baseline comparison" -> Q="How does this compare to SOTA on ImageNet?"
+    *   Output: `ValidationReport`.
+*   **Prompt**: `module_6_validation.txt`
