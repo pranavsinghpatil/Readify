@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FileUpload } from '../components/FileUpload';
 import { ChatInterface } from '../components/ChatInterface';
 import { Sparkles, Github, FileText, ChevronRight, Twitter } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { resetSession } from '../lib/api';
 
 export default function Home() {
@@ -18,9 +19,7 @@ export default function Home() {
   }, []);
 
   const handleUploadComplete = () => {
-    setTimeout(() => {
-      setHasUploaded(true);
-    }, 1500);
+    setHasUploaded(true);
   };
 
   const handleFilesChange = (newFiles: string[]) => {
@@ -31,7 +30,7 @@ export default function Home() {
     }
   };
 
-  // Browser Refresh Protection
+  // Browser Refresh Protection & Auto-Cleanup
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUploaded) {
@@ -40,9 +39,25 @@ export default function Home() {
         return e.returnValue;
       }
     };
+
+    const handleUnload = () => {
+      if (hasUploaded && sessionId) {
+        // Auto-cleanup on close/refresh using keepalive fetch
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        fetch(`${API_URL}/api/reset/${sessionId}`, {
+          method: 'DELETE',
+          keepalive: true
+        });
+      }
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUploaded]);
+    window.addEventListener('unload', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
+    };
+  }, [hasUploaded, sessionId]);
 
   return (
     <main className="min-h-screen relative flex flex-col">
@@ -81,50 +96,63 @@ export default function Home() {
       {/* Content */}
       <div className="flex-1 flex flex-col justify-center items-center pt-0 pb-10 px-6 max-w-7xl mx-auto w-full min-h-screen">
         
-        {/* State 1: Upload / Hero */}
-        {!hasUploaded && (
-          <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-10 animate-fade-in -mt-20 scale-90 origin-center">
-             <div className="text-center space-y-8">
-               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md shadow-lg">
-                 <Sparkles size={16} className="text-blue-400" />
-                 <span className="text-sm font-medium text-gray-200">Advanced RAG Pipeline</span>
-               </div>
-               
+        <AnimatePresence mode="wait">
+          {/* State 1: Upload / Hero */}
+          {!hasUploaded ? (
+            <motion.div 
+              key="hero"
+              initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, scale: 0.9, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, scale: 1.1, filter: 'blur(20px)' }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-16 origin-center -mt-24"
+            >
+              <div className="text-center space-y-12">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md shadow-lg">
+                  <Sparkles size={16} className="text-blue-400" />
+                  <span className="text-sm font-medium text-gray-200">Advanced RAG Pipeline</span>
+                </div>
+                
                 <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight whitespace-nowrap">
-                  Readify : <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Context + Intelligence Quotient</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Readify :</span> Context + Intelligence 
                 </h1>
-               
-               <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                 Interact with your documents intelligently. Upload PDFs, Word docs, or Text files and get precise, context-aware answers instantly.
-               </p>
-             </div>
+                
+                <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                  Interact with your documents intelligently. Upload PDFs, Word docs, or Text files and get precise, context-aware answers instantly.
+                </p>
+              </div>
 
-             <div className="w-full">
+              <div className="w-full">
                 <FileUpload 
                     onUploadComplete={handleUploadComplete} 
                     files={files}
                     onFilesChange={handleFilesChange}
                     sessionId={sessionId}
                 />
-             </div>
-          </div>
-        )}
-
-        {/* State 2: Chat Interface (Full Screen) */}
-        {hasUploaded && (
-           <div className="absolute inset-0 z-20 bg-[#030712] flex flex-col animate-fade-in">
-               <ChatInterface 
-                  files={files} 
-                  sessionId={sessionId} 
-                  onReset={() => {
-                      resetSession(sessionId).then(() => {
-                           window.location.reload(); 
-                      });
-                  }}
-                  onFilesChange={handleFilesChange}
-               />
-           </div>
-        )}
+              </div>
+            </motion.div>
+          ) : (
+            /* State 2: Chat Interface (Full Screen) */
+            <motion.div 
+              key="chat"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="absolute inset-0 z-20 bg-[#030712] flex flex-col"
+            >
+                <ChatInterface 
+                   files={files} 
+                   sessionId={sessionId} 
+                   onReset={() => {
+                       resetSession(sessionId).then(() => {
+                            setTimeout(() => window.location.reload(), 500); 
+                       });
+                   }}
+                   onFilesChange={handleFilesChange}
+                />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
       

@@ -65,9 +65,24 @@ async def upload_document(files: list[UploadFile] = File(...), session_id: str =
                  errors.append(f"{file.filename}: No content extracted (empty or scannable-only PDF?).")
                  continue
 
-            vector_store.add_documents(chunks)
-            total_chunks += len(chunks)
-            results.append(file.filename)
+            # Add documents with a simple retry mechanism for transient 500 errors
+            success = False
+            for attempt in range(3):
+                try:
+                    vector_store.add_documents(chunks)
+                    success = True
+                    break
+                except Exception as e:
+                    if attempt < 2:
+                        print(f"Retrying document addition for {file.filename} (Attempt {attempt+2})...")
+                        await asyncio.sleep(2)
+                    else:
+                        print(f"Final failure adding documents for {file.filename}: {e}")
+                        errors.append(f"{file.filename}: Vector storage failed after 3 attempts.")
+            
+            if success:
+                total_chunks += len(chunks)
+                results.append(file.filename)
         
         if not results:
              # All failed

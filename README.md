@@ -1,89 +1,100 @@
-# Readify - Document Q&A Assistant
+# Readify - Document Intelligence Assistant
 
-Readify is an intelligent RAG (Retrieval-Augmented Generation) pipeline that allows users to upload documents (PDF, DOCX, TXT, MD) and ask context-aware questions. It leverages a modern Next.js frontend and a robust FastAPI backend with MongoDB Atlas Vector Search.
+Readify is a premium RAG (Retrieval-Augmented Generation) pipeline designed for intelligent, context-aware document exploration. It enables users to upload multiple document formats and engage in deep, citation-backed conversations with their data.
 
-## 🚀 Features
+![Readify Home Screen](docs-media/Home.png)
 
-- **Multi-Format Ingestion**: Supports PDF, DOCX, TXT, and Markdown files.
-- **Advanced RAG Pipeline**: Uses similarity search with metadata filtering for precise answers.
-- **Session Management**: Isolated user sessions to prevent data leakage.
-- **Modern UI**: Polished, dark-themed Chat Interface with real-time feedback.
-- **Provider Agnostic**: Configurable to use **OpenAI** or **Gemini** (currently set to Generic/Gemini for assignment).
+## ✨ Premium Features
 
-> [!NOTE]
-> For a detailed technical breakdown, see our [Full Architecture Guide](ARCHITECTURE.md).
+- **Multi-Format Mastery**: Support for PDF, DOCX, TXT, and Markdown.
+- **Advanced RAG Engine**: Optimized dual-stage retrieval with **MongoDB Atlas Vector Search**.
+- **Real-time Vectorization**: Parallel processing for fast ingestion of large documents.
+- **Strict Session Isolation**: Data remains private and isolated per session.
+- **Verifiable Citations**: Every answer includes precise source and page referencing.
+- **Sleek UX**: Modern dark-themed interface with smooth Framer Motion transitions.
 
-## 🏗️ Architecture Overview
+## 📺 Product Preview
 
-```mermaid
-graph TD
-    User[User] -->|Uploads File| FE[Frontend (Next.js)]
-    User -->|Asks Question| FE
-    
-    FE -->|API Request| BE[Backend API (FastAPI)]
-    
-    subgraph Ingestion Pipeline
-        BE -->|Extract Text| Loader[Document Loader]
-        Loader -->|Split| Chunker[Text Splitter]
-        Chunker -->|Generate| Embed[Embedding Model]
-        Embed -->|Store Vectors| DB[(MongoDB Atlas)]
-    end
-    
-    subgraph RAG Query Pipeline
-        BE -->|Query| DB
-        DB -->|Top-k Chunks| BE
-        BE -->|Context + Prompt| LLM[LLM Service]
-        LLM -->|Answer| BE
-    end
-```
+![Readify Demo Gif](docs-media/Readify_demo%20-%20Made%20with%20Clipchamp.gif)
+
+---
+
+## 🏗️ System Architecture
+
+Readify uses a modular architecture that separates the ingestion pipeline from the query pipeline to ensure maximum performance and accuracy.
+
+![Architecture Diagram](docs-media/Architecture.png)
+
+*For a deep dive into the technical details, read the [Full Architecture Guide](ARCHITECTURE.md) and [Technical Strategy](TECHNICAL_STRATEGY.md).*
+
+---
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: Next.js 14, Tailwind CSS, Lucide Icons, Framer Motion
-- **Backend**: FastAPI, LangChain, PyMongo
-- **Database**: MongoDB Atlas (Vector Search)
-- **AI**: LangChain (OpenAI/Gemini integrations)
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend** | Next.js 14, Tailwind CSS, Framer Motion, Lucide Icons |
+| **Backend** | FastAPI, LangChain, PyMongo |
+| **Database** | MongoDB Atlas (Vector Search & Metadata Filtering) |
+| **Models** | Gemini 2.5 Flash (LLM), Text-Embedding-004 (Google) |
 
-## 📦 Installation & Setup
+---
 
-### Prerequisites
+## 🚀 Getting Started
+
+### 1. Prerequisites
 - Node.js 18+
 - Python 3.10+
-- MongoDB Atlas Cluster (Vector Search enabled)
+- MongoDB Atlas Cluster
 
-### 1. Clone & Configure
+### 2. Setup & Installation
 ```bash
+# Clone the repository
 git clone https://github.com/pranavsinghpatil/Readify.git
 cd Readify
-```
 
-### 2. Backend Setup
-```bash
-# Create virtual environment (optional but recommended)
-python -m venv venv
-venv\Scripts\activate
-
-# Install dependencies
+# Install Backend Dependencies
 pip install -r backend/requirements.txt
 
-# Configure Environment
-# Copy .env.example to backend/.env and fill in your keys
-copy backend\.env.example backend\.env
+# Install Frontend Dependencies
+cd frontend && npm install && cd ..
 ```
 
-### 3. Frontend Setup
-```bash
-cd frontend
-npm install
-cd ..
+### 3. Environment Configuration
+Create a `.env` file in the `backend/` directory based on `.env.example`:
+```env
+GOOGLE_API_KEY=your_key_here
+MONGODB_URI=your_mongodb_atlas_uri
+DB_NAME=readify_db
+COLLECTION_NAME=documents
 ```
 
-### 4. Run Application
-Simply double-click `launch.bat` or run:
-```bash
+### 4. MongoDB Atlas Search Index
+Configure an Atlas Search Index named `vector_index` on your collection with this JSON:
+```json
+{
+  "fields": [
+    { "type": "vector", "path": "embedding", "numDimensions": 768, "similarity": "cosine" },
+    { "type": "filter", "path": "session_id" },
+    { "type": "filter", "path": "source" }
+  ]
+}
+```
+
+### 5. Launch
+Simply run the included batch file to start both servers:
+```powershell
 .\launch.bat
 ```
-The app will open at `http://localhost:3000`.
 
-## 📄 License
-MIT License. Created by Pranav Patil.
+---
+
+## 📄 Documentation & Media
+
+- [Architecture Guide](ARCHITECTURE.md) - Deep dive into system design.
+- [Technical Strategy](TECHNICAL_STRATEGY.md) - RAG optimizations and technical decisions.
+- [🎬 Product Demo Video](docs-media/Readify_demo%20-%20Made%20with%20Clipchamp.mp4) - Watch the app in action.
+- [⚙️ Architecture Walkthrough](docs-media/Readify_arch%20-%20Made%20with%20Clipchamp.mp4) - Technical video overview.
+
+---
+Created by **Pranav Patil**. 🚀

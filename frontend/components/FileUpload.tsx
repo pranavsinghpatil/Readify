@@ -68,11 +68,11 @@ export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact =
       const updated = Array.from(new Set([...files, ...result.filenames]));
       onFilesChange(updated);
       
-      // Wait a bit to show success state before triggering parent action (which might hide this component)
+      // Wait briefly to show success state before triggering parent transition
       setTimeout(() => {
           onUploadComplete();
           setStatus('idle'); 
-      }, 1500);
+      }, 800);
       
     } catch (error: any) {
       console.error(error);

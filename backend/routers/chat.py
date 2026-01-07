@@ -29,22 +29,25 @@ async def chat(request: ChatRequest):
         embedding_key="embedding"
     )
     
-    # 1. Retrieve a larger pool to allow for post-filtering (k=50)
+    # 1. Setup pre-filtering for strict isolation at the database level
+    # NOTE: This requires 'session_id' and 'source' to be indexed as 'filter' in Atlas Search
+    pre_filter = {
+        "session_id": {"$eq": request.session_id}
+    }
+    if request.filenames:
+        pre_filter["source"] = {"$in": request.filenames}
+
     print(f"--- Query: {request.question} ---")
-    print(f"--- Session: {request.session_id} | Filtering for files: {request.filenames} ---")
-    raw_docs = vector_store.similarity_search(request.question, k=5)
+    print(f"--- Pre-filtering: {pre_filter} ---")
     
-    # 2. Filter by session_id for strict isolation
-    docs = [
-        doc for doc in raw_docs 
-        if doc.metadata.get("session_id") == request.session_id 
-        and (not request.filenames or doc.metadata.get("source") in request.filenames)
-    ]
+    # 2. Execute optimized vector search
+    docs = vector_store.similarity_search(
+        request.question, 
+        k=5,
+        pre_filter=pre_filter
+    )
 
-    # 3. Limit to top 10 relevant chunks for LLM context
-    docs = docs[:5]
-
-    print(f"--- Retrieved {len(docs)} chunks after filtering. ---")
+    print(f"--- Retrieved {len(docs)} high-quality chunks. ---")
     
     if not docs:
         return {
@@ -57,21 +60,22 @@ async def chat(request: ChatRequest):
     # Generate
     llm = provider.get_chat_model()
     
-    prompt_template = """You are an intelligent document research assistant. Your goal is to answer the user's question accurately using ONLY the provided context.
+    prompt_template = """You are Readify AI, an expert research assistant. Your mission is to provide a comprehensive, well-structured, and professional answer based strictly on the provided context.
 
-    Context:
+    ### Context:
     {context}
     
-    Question: {question}
+    ### User Question:
+    {question}
     
-    Instructions:
-    - Look for specific details, titles, definitions, and affiliations in the text.
-    - If the user asks for the "name" or "title" of the paper, look for the main heading at the beginning.
-    - If the user asks about an entity (like "CeADAR") that appears in headers, footers, or affiliations, describe what the text says about it (e.g., "It appears to be an affiliation...").
-    - If the answer is not explicitly stated but is clearly implied by the context, you may infer it.
-    - If the answer is definitely not in the text, say: "I couldn't find this information in the uploaded document."
+    ### Response Guidelines:
+    1. **Synthesize & Structure**: Don't just copy chunks. Synthesize the information into a cohesive, logical response.
+    2. **Markdown Excellence**: Use bold text for key terms, bullet points for lists, and headers if the response is long.
+    3. **Professional Tone**: Maintain a helpful, objective, and expert tone.
+    4. **Precision**: Use specific details, data points, or definitions found in the context.
+    5. **Groundedness**: If the answer isn't in the context, strictly adhere to the provided documents and clearly state: "Based on the provided documents, I couldn't find specific information regarding this."
     
-    Answer:"""
+    ### Answer:"""
     
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
     files_chain = prompt | llm
