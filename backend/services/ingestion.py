@@ -6,7 +6,9 @@ from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, Te
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-UPLOAD_DIR = "uploads"
+import tempfile
+
+UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "readify_uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 async def save_upload_file(upload_file: UploadFile) -> str:
