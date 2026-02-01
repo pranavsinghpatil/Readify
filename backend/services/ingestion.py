@@ -6,7 +6,9 @@ from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, Te
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-UPLOAD_DIR = "uploads"
+import tempfile
+
+UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "readify_uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 async def save_upload_file(upload_file: UploadFile) -> str:
@@ -33,9 +35,11 @@ def load_document(file_path: str) -> List[Document]:
         else:
             raise ValueError(f"Unsupported file type: {ext}")
     except Exception as e:
+        print(f"Error loading {file_path}: {e}")
         return []
 
 def split_documents(documents: List[Document]) -> List[Document]:
+    # 500-1000 tokens ~ 2000-4000 chars.
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=3000, 
         chunk_overlap=200,
@@ -50,11 +54,15 @@ async def process_file(upload_file: UploadFile, session_id: str = "default") -> 
         if not raw_docs:
             return []
             
+        # IMPORTANT: raw_docs from PyPDFLoader already have 'page' in metadata (0-indexed).
+        # We need to ensure text_splitter preserves this (it usually does) or we handle it.
+        
         chunks = split_documents(raw_docs)
         
         for chunk in chunks:
             chunk.metadata["source"] = upload_file.filename
             chunk.metadata["session_id"] = session_id
+            # Ensure page number is present and 1-indexed for humans
             if "page" in chunk.metadata:
                  chunk.metadata["page"] = int(chunk.metadata["page"]) + 1
             else:

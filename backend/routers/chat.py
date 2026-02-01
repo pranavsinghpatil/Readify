@@ -29,20 +29,26 @@ async def chat(request: ChatRequest):
         embedding_key="embedding"
     )
     
+    # 1. Setup pre-filtering for strict isolation at the database level
+    # NOTE: This requires 'session_id' and 'source' to be indexed as 'filter' in Atlas Search
     pre_filter = {
         "session_id": {"$eq": request.session_id}
     }
     if request.filenames:
         pre_filter["source"] = {"$in": request.filenames}
 
-    raw_docs = vector_store.similarity_search(
+    print(f"--- Query: {request.question} ---")
+    print(f"--- Pre-filtering: {pre_filter} ---")
+    
+    # 2. Execute optimized vector search
+    docs = vector_store.similarity_search(
         request.question, 
         k=5,
         pre_filter=pre_filter
     )
-    
-    docs = raw_docs
 
+    print(f"--- Retrieved {len(docs)} high-quality chunks. ---")
+    
     if not docs:
         return {
             "answer": "I couldn't find this information in the uploaded document(s).",
@@ -51,6 +57,7 @@ async def chat(request: ChatRequest):
 
     context = "\n\n".join([doc.page_content for doc in docs])
     
+    # Generate
     llm = provider.get_chat_model()
     
     prompt_template = """You are Readify AI, an expert research assistant. Your mission is to provide a comprehensive, well-structured, and professional answer based strictly on the provided context.
@@ -79,11 +86,15 @@ async def chat(request: ChatRequest):
         error_msg = str(e)
         if "RESOURCE_EXHAUSTED" in error_msg or "429" in error_msg:
              raise HTTPException(status_code=429, detail="Free tier rate limit exceeded. Please wait ~30 seconds before trying again.")
+        print(f"LLM Generation Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate response from AI provider.")
     
+    # Deduplicate citations with Page Numbers
+    # Format: "Filename (Page X, Y)"
     source_map = {}
     for doc in docs:
         source = doc.metadata.get("source", "Unknown")
+        # Metadata 'page' should be 1-indexed int from ingestion
         page = doc.metadata.get("page", "?")
         if source not in source_map:
             source_map[source] = set()
@@ -91,8 +102,10 @@ async def chat(request: ChatRequest):
     
     citations = []
     for source, pages in source_map.items():
+        # Filter out '?' and sort numerical pages
         valid_pages = [p for p in pages if p != '?' and p.isdigit()]
         sorted_pages = sorted(valid_pages, key=lambda x: int(x))
+        
         if sorted_pages:
              page_str = ", ".join(sorted_pages)
              citations.append(f"{source} (Page {page_str})")

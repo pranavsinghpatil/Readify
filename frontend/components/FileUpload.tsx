@@ -5,6 +5,11 @@ import { Upload, FileText, CheckCircle, AlertCircle, Loader2, X } from 'lucide-r
 import { uploadDocument, deleteFile } from '../lib/api';
 import { cn } from '../lib/utils';
 
+interface FileUploadProps {
+  onUploadComplete: (filename: string) => void;
+  isCompact?: boolean;
+}
+
 export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact = false, sessionId }: { 
   onUploadComplete: () => void; 
   files: string[];
@@ -46,36 +51,59 @@ export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact =
     setErrorMessage('');
     setProcessingCount(fileList.length);
     
+    // Add temp names immediately for UI feedback
+    const newNames = Array.from(fileList).map(f => f.name);
+    
     try {
       const result = await uploadDocument(fileList, sessionId);
+      
+      // Handle partial success/errors if backend returned them
+      if (result.errors && result.errors.length > 0) {
+          console.warn("Some files failed:", result.errors);
+          // show warning visually? For now just log.
+      }
+
       setStatus('success');
+      // Merge new files with existing, avoiding duplicates
       const updated = Array.from(new Set([...files, ...result.filenames]));
       onFilesChange(updated);
       
+      // Wait briefly to show success state before triggering parent transition
       setTimeout(() => {
           onUploadComplete();
           setStatus('idle'); 
       }, 800);
       
     } catch (error: any) {
+      console.error(error);
       setStatus('error');
       setErrorMessage(error.response?.data?.detail || "Upload failed. Please check file format.");
     }
   };
 
+
+
   const removeFile = async (nameToRemove: string) => {
+    // Optimistic UI update
     const updated = files.filter(f => f !== nameToRemove);
     onFilesChange(updated);
+    
+    // Background deletion
     try {
         await deleteFile(nameToRemove, sessionId);
     } catch (e) {
-        console.error(e);
+        console.error("Failed to delete file from backend:", e);
+        // We could revert the UI change here, but for now let's assume it's fine 
+        // as the file is effectively removed from the current context list anyway.
     }
   };
 
+  // Compact View (for when chat is active)
   if (isCompact) {
     return (
-      <div className="w-full flex flex-col gap-3 animate-slide-in-up">
+      <div 
+        className="w-full flex flex-col gap-3 animate-slide-in-up"
+      >
          <div className="flex items-center justify-between px-1">
              <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                 Active Context ({files.length})
@@ -83,21 +111,23 @@ export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact =
              <button 
                onClick={() => fileInputRef.current?.click()}
                className="text-[10px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded transition-all flex items-center gap-1 border border-emerald-500/20"
+               title="Upload more files"
              >
                <Upload size={10} /> Add Docs
              </button>
          </div>
 
-         <div className="space-y-1 max-h-[150px] overflow-y-auto px-1 scrollbar-thin">
+         {/* File List */}
+         <div className="space-y-1 max-h-[150px] overflow-y-auto px-1 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-transparent">
             {files.map((file, i) => (
                 <div key={i} className="group flex items-center justify-between p-2 rounded-md bg-white/5 hover:bg-white/10 transition-colors border border-transparent hover:border-white/5">
                     <div className="flex items-center gap-2 overflow-hidden">
                         <FileText size={12} className="text-gray-500 shrink-0" />
-                        <span className="text-[12px] text-gray-300 truncate">{file}</span>
+                        <span className="text-[12px] text-gray-300 truncate" title={file}>{file}</span>
                     </div>
                     <button 
                       onClick={() => removeFile(file)}
-                      className="text-gray-600 hover:text-red-100 transition-opacity"
+                      className="text-gray-600 hover:text-red-100 opacity-100  transition-opacity"
                     >
                         <X size={12} />
                     </button>
@@ -110,11 +140,13 @@ export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact =
                </div>
             )}
          </div>
+         
          <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept=".pdf,.docx,.txt,.md" multiple />
       </div>
     );
   }
 
+  // Active Upload View (Hero)
   return (
     <div className="w-full max-w-xl mx-auto">
       <div 
@@ -129,7 +161,10 @@ export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact =
         onClick={() => fileInputRef.current?.click()}
       >
         <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept=".pdf,.docx,.txt,.md" multiple />
+        
+        {/* Glow Effect */}
         <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
         <div className="relative flex flex-col items-center justify-center text-center space-y-6">
           {status === 'idle' && (
             <>
@@ -139,7 +174,7 @@ export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact =
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold text-white tracking-tight">Upload Knowledge Docs</h3>
                 <p className="text-sm text-gray-400 leading-relaxed max-w-[260px] mx-auto">
-                  Drag & drop your documents here.<br/> Multiple files supported.
+                  Drag & drop your documents (PDF, Markdown, DOCX, TXT) here.<br/> Multiple files supported.
                 </p>
               </div>
             </>
@@ -151,6 +186,7 @@ export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact =
                    <span className="text-sm font-medium">Processing Queue ({processingCount})</span>
                    <Loader2 size={14} className="animate-spin text-emerald-400" />
                 </div>
+                {/* Mock list for uploading state */}
                 <div className="flex flex-col gap-2">
                    <div className="flex items-center gap-3 bg-gray-900/40 p-2.5 rounded-lg border border-white/5">
                         <div className="h-1.5 flex-1 bg-gray-700 rounded-full overflow-hidden">
@@ -158,6 +194,7 @@ export function FileUpload({ onUploadComplete, files, onFilesChange, isCompact =
                          </div>
                    </div>
                 </div>
+                <p className="text-[10px] text-gray-500 text-center">Parallel extraction & vectorization enabled</p>
             </div>
           )}
 

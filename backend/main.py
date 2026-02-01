@@ -7,16 +7,20 @@ from contextlib import asynccontextmanager
 import os
 from pathlib import Path
 
+# Explicitly load .env from the backend directory
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup
     test_connection()
     yield
+    # Shutdown
 
 app = FastAPI(title="Readify API", version="1.0.0", lifespan=lifespan)
 
+# CORS
 origins = ["http://localhost:3000", "http://localhost:8000", "*"] 
 app.add_middleware(
     CORSMiddleware,

@@ -11,7 +11,7 @@ graph TD
     
     subgraph Ingestion Pipeline
         BE -->|3. Extract & Chunk| Split[Recursive Chunker]
-        Split -->|4. Vectorize| AI_EMB[Embedding API]
+        Split -->|4. Vectorize| AI_EMB[Gemini Embedding API]
         AI_EMB -->|5. Store| VDB[(MongoDB Atlas Vector Search)]
     end
     
@@ -21,7 +21,7 @@ graph TD
     subgraph Retrieval Pipeline
         BE -->|8. Pre-Filtered Search| VDB
         VDB -->|9. Top-k Context| BE
-        BE -->|10. Prompt + Context| LLM[Language Model]
+        BE -->|10. Prompt + Context| LLM[Gemini 2.5 Flash]
         LLM -->|11. Synthesized Answer| BE
     end
     
@@ -42,9 +42,9 @@ graph TD
 - **Resilience**: Implements retry patterns for AI provider calls.
 - **Session ID Management**: Generates and propagates unique session identifiers to ensure strict data silos.
 
-### 3. Intelligence: Advanced Language Models
-- **LLM**: Utilizes high-performance models for reasoning and fast response times.
-- **Embeddings**: Employs high-dimensional vectors for precise semantic representation.
+### 3. Intelligence: Google Gemini 2.5 Flash
+- **LLM**: Chosen for its high reasoning capabilities and ultra-fast response times.
+- **Embeddings**: Uses `text-embedding-004` for high-dimensional semantic representation.
 - **Reasoning**: Configured with a Zero-Temperature setting to ensure factual consistency and minimize hallucinations.
 
 ### 4. Storage: MongoDB Atlas Vector Search

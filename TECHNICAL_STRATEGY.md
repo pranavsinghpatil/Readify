@@ -36,10 +36,10 @@ To prevent the LLM from simply outputting raw data fragments, Readify uses a **S
 ---
 
 ## 4. Handling Transient Provider Errors
-Production RAG systems often face rate limits or internal server errors from AI providers. 
+Production RAG systems often face rate limits or internal server errors from AI providers (like Gemini). 
 
 **Implemented Solution**:
-- **Ingestion Retries**: A 3-attempt exponential backoff retry loop was added to the ingestion pipeline. If the AI provider's embedding service has a transient 500 error, the system waits and retries automatically.
+- **Ingestion Retries**: A 3-attempt exponential backoff retry loop was added to the ingestion pipeline. If Gemini's embedding service has a transient 500 error, the system waits and retries automatically.
 - **API Status Handling**: Graceful error messages and 429 status codes are returned to the frontend if rate limits are hit, maintaining a stable user experience.
 
 ---

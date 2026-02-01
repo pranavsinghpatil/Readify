@@ -10,9 +10,11 @@ import { resetSession } from '../lib/api';
 export default function Home() {
   const [hasUploaded, setHasUploaded] = useState(false);
   const [files, setFiles] = useState<string[]>([]);
+  // Use a simple random ID for the session. In a real app, use UUID.
   const [sessionId, setSessionId] = useState<string>('');
 
   useEffect(() => {
+    // Generate session ID on mount
     setSessionId(Math.random().toString(36).substring(2, 15));
   }, []);
 
@@ -22,11 +24,13 @@ export default function Home() {
 
   const handleFilesChange = (newFiles: string[]) => {
     setFiles(newFiles);
+    // If user removes all files, go back to home
     if (newFiles.length === 0 && hasUploaded) {
         setHasUploaded(false);
     }
   };
 
+  // Browser Refresh Protection & Auto-Cleanup
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUploaded) {
@@ -38,6 +42,7 @@ export default function Home() {
 
     const handleUnload = () => {
       if (hasUploaded && sessionId) {
+        // Auto-cleanup on close/refresh using keepalive fetch
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         fetch(`${API_URL}/api/reset/${sessionId}`, {
           method: 'DELETE',
@@ -56,10 +61,13 @@ export default function Home() {
 
   return (
     <main className="min-h-screen relative flex flex-col">
+      
+      {/* Dynamic Background Elements */}
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-[#0a0f1e] to-black"></div>
       <div className="fixed top-0 left-0 right-0 h-[500px] bg-emerald-500/10 blur-[120px] rounded-full mix-blend-screen pointer-events-none"></div>
       <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[100px] rounded-full mix-blend-screen pointer-events-none"></div>
 
+      {/* Navbar - Only verify visible on Landing Page */}
       {!hasUploaded && (
         <header className="absolute top-0 w-full z-50 bg-transparent">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -85,8 +93,11 @@ export default function Home() {
         </header>
       )}
 
+      {/* Content */}
       <div className="flex-1 flex flex-col justify-center items-center pt-0 pb-10 px-6 max-w-7xl mx-auto w-full min-h-screen">
+        
         <AnimatePresence mode="wait">
+          {/* State 1: Upload / Hero */}
           {!hasUploaded ? (
             <motion.div 
               key="hero"
@@ -121,6 +132,7 @@ export default function Home() {
               </div>
             </motion.div>
           ) : (
+            /* State 2: Chat Interface (Full Screen) */
             <motion.div 
               key="chat"
               initial={{ opacity: 0, y: 20 }}
@@ -141,8 +153,10 @@ export default function Home() {
             </motion.div>
           )}
         </AnimatePresence>
+
       </div>
       
+      {/* Footer */}
       {!hasUploaded && (
         <footer className="absolute bottom-6 w-full text-center">
             <div className="flex items-center justify-center gap-4 text-sm font-medium">
@@ -158,6 +172,7 @@ export default function Home() {
             </div>
         </footer>
       )}
+      
     </main>
   );
 }

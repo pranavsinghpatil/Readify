@@ -36,7 +36,7 @@ Readify uses a modular architecture that separates the ingestion pipeline from t
 | **Frontend** | Next.js 14, Tailwind CSS, Framer Motion, Lucide Icons |
 | **Backend** | FastAPI, LangChain, PyMongo |
 | **Database** | MongoDB Atlas (Vector Search & Metadata Filtering) |
-| **Models** | OpenAI GPT-4o & Text-Embedding-3-Small |
+| **Models** | Gemini 2.5 Flash (LLM), Text-Embedding-004 (Google) |
 
 ---
 
@@ -63,7 +63,7 @@ cd frontend && npm install && cd ..
 ### 3. Environment Configuration
 Create a `.env` file in the `backend/` directory based on `.env.example`:
 ```env
-OPENAI_API_KEY=sk-proj-your_openai_key_here
+GOOGLE_API_KEY=your_key_here
 MONGODB_URI=your_mongodb_atlas_uri
 DB_NAME=readify_db
 COLLECTION_NAME=documents
@@ -74,7 +74,7 @@ Configure an Atlas Search Index named `vector_index` on your collection with thi
 ```json
 {
   "fields": [
-    { "type": "vector", "path": "embedding", "numDimensions": 1536, "similarity": "cosine" },
+    { "type": "vector", "path": "embedding", "numDimensions": 768, "similarity": "cosine" },
     { "type": "filter", "path": "session_id" },
     { "type": "filter", "path": "source" }
   ]
