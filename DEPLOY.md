@@ -40,8 +40,11 @@ We use **Vercel** for the Next.js frontend.
 4. **Framework Preset**: Next.js.
 5. **Root Directory**: Select `frontend`.
 6. **Environment Variables**:
-   - `NEXT_PUBLIC_API_URL`: Paste your Leapcell Service Domain from Step 2 (e.g., `https://readify-backend-xyz.leapcell.dev/api`).
-   - **Important**: ensure you include `/api` at the end and NO trailing slash (e.g., `.../api`).
+   - `NEXT_PUBLIC_API_URL`: Paste your Leapcell Service Domain (e.g., `https://readify-backend-xyz.leapcell.dev/api`).
+   - **CRITICAL**: The URL **must** end with `/api` but **must NOT** have a slash at the end. 
+     - ✅ `https://your-app.leapcell.dev/api`
+     - ❌ `https://your-app.leapcell.dev` (Missing `/api`)
+     - ❌ `https://your-app.leapcell.dev/api/` (Extra trailing slash)
 7. **Deploy**.
 
 ## 4. Final Verification
@@ -50,6 +53,7 @@ We use **Vercel** for the Next.js frontend.
 3. If it fails, check:
    - **CORS**: Leapcell might strictly check host headers. If you get CORS errors, update `backend/main.py` -> `origins` to typically include your Vercel domain.
    - **Logs**: Check Leapcell logs for any "Module not found" errors.
+   - **MongoDB Auth**: If you see `bad auth`, check that your MongoDB password does not contain special characters like `@`, `:`, or `/`. If it does, you must **URL-encode** them (e.g., `@` becomes `%40`).
 
 ## Troubleshooting
 - **Import Errors on Leapcell**: If you see `Module backend not found`, ensure your Start Command is running from the repository root (not inside `backend` folder) and using `python -m uvicorn backend.main:app`.

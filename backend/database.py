@@ -9,17 +9,20 @@ env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 def get_mongodb_uri():
-    uri = os.getenv("MONGODB_URI")
-    if not uri:
-        # Fallback to check if it's set after imports
-        print("Warning: MONGODB_URI not found in initial environment fetch. Retrying...")
+    # Try MONGODB_URI first, then MONGODB_URL (common in some platforms)
+    uri = os.getenv("MONGODB_URI") or os.getenv("MONGODB_URL")
     return uri
 
 def get_db_client():
     uri = get_mongodb_uri()
     if not uri:
-        print("Error: MONGODB_URI is still not set. Current env keys:", list(os.environ.keys()))
+        print("Error: Neither MONGODB_URI nor MONGODB_URL is set in environment.")
         return None
+    
+    # Hide the password in logs but show the start of the URI
+    sanitized_uri = uri.split('@')[-1] if '@' in uri else "Invalid URI"
+    print(f"Connecting to MongoDB Atlas cluster: ...@{sanitized_uri}")
+    
     return MongoClient(uri, tlsCAFile=certifi.where())
 
 def get_collection():
