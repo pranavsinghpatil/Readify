@@ -30,8 +30,8 @@ class LLMProvider:
         if self.provider == "gemini":
             if not os.getenv("GOOGLE_API_KEY"):
                 raise ValueError("GOOGLE_API_KEY is missing. Please check backend/.env")
-            # text-embedding-004 was shut down on Jan 14, 2026. Migrating to 005.
-            return GoogleGenerativeAIEmbeddings(model="models/text-embedding-005")
+            # Switching to text-embedding-004 (stable) as 004/005 are showing 404 in some regions/versions
+            return GoogleGenerativeAIEmbeddings(model="text-embedding-004")
         elif self.provider == "openai":
             if not os.getenv("OPENAI_API_KEY"):
                 raise ValueError("OPENAI_API_KEY is missing. Please check backend/.env")
@@ -40,7 +40,7 @@ class LLMProvider:
             # Groq does not provide embeddings yet, so we treat it as a mix.
             # We will use Google Embeddings as the default partner for Groq due to speed/cost alignment.
             if os.getenv("GOOGLE_API_KEY"):
-                 return GoogleGenerativeAIEmbeddings(model="models/text-embedding-005")
+                 return GoogleGenerativeAIEmbeddings(model="text-embedding-004")
             elif os.getenv("OPENAI_API_KEY"):
                 return OpenAIEmbeddings(model="text-embedding-3-small")
             else:
