@@ -30,8 +30,8 @@ class LLMProvider:
         if self.provider == "gemini":
             if not os.getenv("GOOGLE_API_KEY"):
                 raise ValueError("GOOGLE_API_KEY is missing. Please check backend/.env")
-            # Switching to text-embedding-004 (stable) as 004/005 are showing 404 in some regions/versions
-            return GoogleGenerativeAIEmbeddings(model="text-embedding-004")
+            # Using embedding-001 as it is reported as the only available model
+            return GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         elif self.provider == "openai":
             if not os.getenv("OPENAI_API_KEY"):
                 raise ValueError("OPENAI_API_KEY is missing. Please check backend/.env")
@@ -40,7 +40,7 @@ class LLMProvider:
             # Groq does not provide embeddings yet, so we treat it as a mix.
             # We will use Google Embeddings as the default partner for Groq due to speed/cost alignment.
             if os.getenv("GOOGLE_API_KEY"):
-                 return GoogleGenerativeAIEmbeddings(model="text-embedding-004")
+                 return GoogleGenerativeAIEmbeddings(model="models/embedding-001")
             elif os.getenv("OPENAI_API_KEY"):
                 return OpenAIEmbeddings(model="text-embedding-3-small")
             else:
@@ -68,13 +68,13 @@ class LLMProvider:
 
     def get_dimension(self):
         if self.provider == "gemini":
-            return 768
+            return 3072  # gemini-embedding-001 defaults to 3072
         elif self.provider == "openai":
             return 1536
         elif self.provider == "groq":
              # Matches the embedding provider logic above
             if os.getenv("GOOGLE_API_KEY"):
-                return 768
+                return 3072
             elif os.getenv("OPENAI_API_KEY"):
                 return 1536
-        return 768
+        return 3072

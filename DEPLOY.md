@@ -6,7 +6,24 @@ This guide will help you deploy the Readify application. The project consists of
 
 ## 1. Database Setup (MongoDB Atlas)
 Ensure your MongoDB Atlas cluster is running and you have the connection string.
-- You need to allow access from **Anywhere (0.0.0.0/0)** in Network Access.
+1. **IP Whitelist**: You need to allow access from **Anywhere (0.0.0.0/0)** in Network Access.
+2. **Create Database**: Create a database named `readify_db` and a collection named `documents`.
+3. **Search Index**: Create an **Atlas Vector Search Index** on the `documents` collection:
+   - **Index Name**: `vector_index`
+   - **Configuration (JSON)**:
+     ```json
+     {
+       "fields": [
+         {
+           "numDimensions": 3072,
+           "path": "embedding",
+           "similarity": "cosine",
+           "type": "vector"
+         }
+       ]
+     }
+     ```
+   - *Note*: If you use OpenAI instead, change `numDimensions` to `1536`.
 
 ## 2. Deploying Backend (Leapcell)
 We will use **Leapcell** for the Python backend. Due to the monorepo structure, we use a Root Dockerfile.
