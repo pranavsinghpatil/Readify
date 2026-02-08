@@ -1,7 +1,8 @@
-from pymongo import MongoClient
 import os
-from dotenv import load_dotenv
+import certifi
 from pathlib import Path
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Explicitly load .env from the backend directory
 env_path = Path(__file__).parent / ".env"
@@ -19,7 +20,7 @@ def get_db_client():
     if not uri:
         print("Error: MONGODB_URI is still not set. Current env keys:", list(os.environ.keys()))
         return None
-    return MongoClient(uri)
+    return MongoClient(uri, tlsCAFile=certifi.where())
 
 def get_collection():
     client = get_db_client()

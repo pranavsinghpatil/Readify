@@ -39,6 +39,7 @@ async def root():
     return {"message": "Readify Backend Running"}
 
 @app.get("/kaithhealthcheck")
+@app.get("/kaithheathcheck")
 @app.get("/health")
 async def health():
     return {"status": "ok", "message": "Backend is healthy"}

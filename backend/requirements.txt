@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 python-multipart
-pymongo
+pymongo[srv]
+certifi
 langchain>=0.1.0
 langchain-core
 langchain-community
