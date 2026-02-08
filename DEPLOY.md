@@ -9,26 +9,25 @@ Ensure your MongoDB Atlas cluster is running and you have the connection string.
 - You need to allow access from **Anywhere (0.0.0.0/0)** in Network Access.
 
 ## 2. Deploying Backend (Leapcell)
-We will use **Leapcell** for the Python backend as it provides excellent generic serverless hosting for FastAPI.
+We will use **Leapcell** for the Python backend. Due to the monorepo structure, we use a Root Dockerfile.
 
 1. **Push your code to GitHub**.
-2. Go to [leapcell.io](https://leapcell.io) and sign up/login.
+2. Go to [leapcell.io](https://leapcell.io).
 3. Click **Create Service** -> **Connect GitHub**.
 4. Select your `Readify` repository.
 5. **Configuration**:
-   - **Runtime**: Python 3.10 (or latest)
-   - **Build Command**: `pip install -r backend/requirements.txt`
-   - **Start Command**: `python -m uvicorn backend.main:app --host 0.0.0.0 --port 8080`
-   - **Port**: `8080` (Leapcell expects the app to listen on this port)
-   - **Root Directory**: `.` (Leave as default, running from repo root is best for imports).
+   - **Service Type**: Select **Docker** (This is crucial to avoid "Build Plan" errors).
+   - **Dockerfile Path**: `Dockerfile` (should be current default).
+   - **Root Directory**: `.`
 6. **Environment Variables**:
    - `LLM_PROVIDER`: `groq`
-   - `GROQ_API_KEY`: (Your Groq API Key)
-   - `GOOGLE_API_KEY`: (Your Google Key - needed for Embeddings!)
-   - `MONGODB_URI`: (Your Atlas Connection String)
+   - `GROQ_API_KEY`: (Your Key)
+   - `GOOGLE_API_KEY`: (Your Key)
+   - `MONGODB_URL`: (Your Atlas Connection String)
    - `DB_NAME`: `readify_db`
    - `COLLECTION_NAME`: `documents`
 7. Click **Deploy**.
+
 8. Copy the **Service Domain** (e.g., `https://readify-backend-xyz.leapcell.dev`).
 
 ## 3. Deploying Frontend (Vercel)
