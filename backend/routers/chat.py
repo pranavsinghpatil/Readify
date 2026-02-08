@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from backend.services.llm_provider import LLMProvider
-from langchain_community.vectorstores import MongoDBAtlasVectorSearch
+from langchain_mongodb import MongoDBAtlasVectorSearch
 from backend.database import get_collection
 from langchain_core.prompts import PromptTemplate
 

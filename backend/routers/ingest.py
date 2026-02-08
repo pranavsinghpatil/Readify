@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from backend.services.ingestion import process_file
 from backend.database import get_collection
 from backend.services.llm_provider import LLMProvider
-from langchain_community.vectorstores import MongoDBAtlasVectorSearch
+from langchain_mongodb import MongoDBAtlasVectorSearch
 import os
 
 router = APIRouter()
