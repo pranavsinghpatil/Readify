@@ -7,23 +7,28 @@ from pathlib import Path
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
-MONGODB_URI = os.getenv("MONGODB_URI")
-DB_NAME = os.getenv("DB_NAME", "readify_db")
-COLLECTION_NAME = os.getenv("COLLECTION_NAME", "documents")
+def get_mongodb_uri():
+    uri = os.getenv("MONGODB_URI")
+    if not uri:
+        # Fallback to check if it's set after imports
+        print("Warning: MONGODB_URI not found in initial environment fetch. Retrying...")
+    return uri
 
 def get_db_client():
-    if not MONGODB_URI:
-        # For development, we might not have it yet.
-        print("Warning: MONGODB_URI not set.")
+    uri = get_mongodb_uri()
+    if not uri:
+        print("Error: MONGODB_URI is still not set. Current env keys:", list(os.environ.keys()))
         return None
-    return MongoClient(MONGODB_URI)
+    return MongoClient(uri)
 
 def get_collection():
     client = get_db_client()
     if not client:
         return None
-    db = client[DB_NAME]
-    return db[COLLECTION_NAME]
+    db_name = os.getenv("DB_NAME", "readify_db")
+    collection_name = os.getenv("COLLECTION_NAME", "documents")
+    db = client[db_name]
+    return db[collection_name]
 
 def test_connection():
     try:
